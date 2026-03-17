@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -235,7 +235,7 @@ export default function FlightScanner() {
     tripType: "one-way", alertEmail: "", priceThreshold: "",
   });
 
-  const [alertToggles, setAlertToggles] = useState({ email: false, threshold: false });
+const [alertToggles] = useState({ email: false, threshold: false });
 
   // ── Countdown ──────────────────────────────────────────────────────────────
   useEffect(() => {
