@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 // Set this to your Railway backend URL after deploying.
 // e.g. "https://skanner-backend-production.up.railway.app"
-const API_BASE   = process.env.REACT_APP_API_BASE ?? "http://localhost:3000";
-const API_SECRET = process.env.REACT_APP_API_SECRET ?? "";
+const API_BASE   = import.meta.env?.VITE_API_BASE ?? "http://localhost:3000";
+const API_SECRET = import.meta.env?.VITE_API_SECRET ?? "";
 
 const STYLE = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
@@ -154,6 +154,69 @@ const CustomTooltip = ({ active, payload, label }) => {
     </div>
   );
 };
+
+// ── Telegram Test Component ───────────────────────────────────────────────────
+
+function TelegramTest({ apiBase, apiSecret }) {
+  const [status, setStatus] = useState("idle"); // idle | loading | ok | error
+  const [msg,    setMsg]    = useState("");
+
+  async function test() {
+    setStatus("loading"); setMsg("");
+    try {
+      const res = await fetch(`${apiBase}/test-telegram`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiSecret ? { Authorization: `Bearer ${apiSecret}` } : {}),
+        },
+      });
+      const data = await res.json();
+      if (data.ok) { setStatus("ok");    setMsg("Message sent! Check Telegram ✓"); }
+      else          { setStatus("error"); setMsg(data.error ?? "Failed"); }
+    } catch (e) {
+      setStatus("error"); setMsg(e.message);
+    }
+    setTimeout(() => setStatus("idle"), 4000);
+  }
+
+  const colors = {
+    idle:    { bg: "rgba(0,229,255,.06)",  border: "rgba(0,229,255,.2)",   color: "#00e5ff" },
+    loading: { bg: "rgba(0,229,255,.06)",  border: "rgba(0,229,255,.2)",   color: "#4a5068" },
+    ok:      { bg: "rgba(0,255,136,.08)",  border: "rgba(0,255,136,.25)",  color: "#00ff88" },
+    error:   { bg: "rgba(255,80,80,.08)",  border: "rgba(255,80,80,.25)",  color: "#ff5050" },
+  };
+  const c = colors[status];
+
+  return (
+    <div style={{ border: `1px solid ${c.border}`, background: c.bg, borderRadius: 2, padding: "12px 14px", marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18 }}>✈</span>
+          <div>
+            <div style={{ fontSize: ".82rem", fontWeight: 600, marginBottom: 2 }}>Telegram Alerts</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: ".65rem", color: "var(--muted)" }}>
+              {msg || "Send a test message to your bot"}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={test}
+          disabled={status === "loading"}
+          style={{
+            padding: "7px 16px", fontSize: ".7rem", fontFamily: "var(--font-display)",
+            fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase",
+            background: "transparent", border: `1px solid ${c.border}`,
+            borderRadius: 2, color: c.color, cursor: status === "loading" ? "not-allowed" : "pointer",
+            whiteSpace: "nowrap", transition: "all .15s", opacity: status === "loading" ? .6 : 1,
+          }}
+        >
+          {status === "loading" ? "Sending…" : status === "ok" ? "Sent ✓" : "Test Now"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ── Main App ─────────────────────────────────────────────────────────────────
 
@@ -408,39 +471,15 @@ export default function FlightScanner() {
               {/* Alert Settings */}
               <div className="card-label" style={{ marginTop: 4 }}>Alert Settings</div>
 
-              <div className="alert-row">
-                <div className="alert-icon">📧</div>
-                <div className="alert-text">
-                  <div className="alert-title">Email Alerts</div>
-                  <div className="alert-sub">Notify on every deal found</div>
-                </div>
-                <div className={`toggle ${alertToggles.email ? "on" : ""}`} onClick={() => setAlertToggles(a => ({ ...a, email: !a.email }))} />
-              </div>
-              {alertToggles.email && (
-                <div className="form-group" style={{ marginTop: 10 }}>
-                  <label>Email Address</label>
-                  <input type="email" value={draft.alertEmail} onChange={e => setDraft(d => ({ ...d, alertEmail: e.target.value }))} placeholder="you@email.com" />
-                </div>
-              )}
+              <TelegramTest apiBase={API_BASE} apiSecret={API_SECRET} />
 
               <div className="alert-row">
                 <div className="alert-icon">🎯</div>
                 <div className="alert-text">
                   <div className="alert-title">Price Threshold</div>
-                  <div className="alert-sub">Alert only below target price</div>
+                  <div className="alert-sub">Alerts fire below $150 · set in backend</div>
                 </div>
-                <div className={`toggle ${alertToggles.threshold ? "on" : ""}`} onClick={() => setAlertToggles(a => ({ ...a, threshold: !a.threshold }))} />
               </div>
-              {alertToggles.threshold && (
-                <div className="form-group" style={{ marginTop: 10 }}>
-                  <label>Max Price (USD)</label>
-                  <div className="threshold-input">
-                    <span>$</span>
-                    <input type="number" value={draft.priceThreshold} onChange={e => setDraft(d => ({ ...d, priceThreshold: e.target.value }))} placeholder="200" />
-                    <span>or less</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
