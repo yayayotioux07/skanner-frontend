@@ -4,8 +4,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // ─── Config ──────────────────────────────────────────────────────────────────
 // Set this to your Railway backend URL after deploying.
 // e.g. "https://skanner-backend-production.up.railway.app"
-const API_BASE   = import.meta.env?.VITE_API_BASE ?? "http://localhost:3000";
-const API_SECRET = import.meta.env?.VITE_API_SECRET ?? "";
+const API_BASE   = process.env.REACT_APP_API_BASE ?? "http://localhost:3000";
+const API_SECRET = process.env.REACT_APP_API_SECRET ?? "";
+
 
 const STYLE = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
